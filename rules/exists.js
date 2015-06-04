@@ -4,11 +4,17 @@ var url = require('url');
 var EXTENSIONS = [ 'js', 'jsx', 'es6' ];
 
 function getModulesDir(fromDir) {
-  var current = fromDir.split(path.sep);
-  var list;
+  var current = fromDir.split(path.sep).filter(Boolean);
+  var pathname, list;
 
   while (current.length) {
-    list = fs.readdirSync(current.join(path.sep));
+    pathname = current.join(path.sep);
+
+    if (!fs.existsSync(pathname)) {
+      return null;
+    }
+
+    list = fs.readdirSync(pathname);
 
     if (list.indexOf('package.json') >= 0) {
       return path.join(current.join(path.sep), 'node_modules');
