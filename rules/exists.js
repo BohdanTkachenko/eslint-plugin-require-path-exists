@@ -1,3 +1,5 @@
+/* global atom */
+
 var fs = require('fs');
 var path = require('path');
 var url = require('url');
@@ -92,7 +94,29 @@ module.exports = function (context) {
         return;
       }
 
-      var fileDir = path.dirname(path.join(process.cwd(), context.getFilename()));
+      var fileDir;
+      if (atom !== undefined) {
+        var editor = atom.workspace.getActivePaneItem();
+
+        if (!editor) {
+          return;
+        }
+
+        var file = editor.buffer.file;
+
+        if (!file) {
+          return;
+        }
+
+        if (file.cachedContents !== context.getSource()) {
+          return;
+        }
+
+        fileDir = path.dirname(file.path);
+      } else {
+        fileDir = path.dirname(path.join(process.cwd(), context.getFilename()));
+      }
+
       var modulesDir = getModulesDir(fileDir) || '';
 
       node.arguments[0].value.split('!')
