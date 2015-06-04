@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-require-path-exists",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Checks all require path's to exist as files",
   "main": "index.js",
   "scripts": {
