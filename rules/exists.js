@@ -34,7 +34,7 @@ function resolveModule(fromDir, modulesDir) {
       return path.join(fromDir, pathname);
     } else if (pathname[0] === '/') { // absolute
       return value;
-    } else { // node_modules
+    } else if (modulesDir) { // node_modules
       var moduleDir = path.join(modulesDir, value);
       var packageFilename = path.join(moduleDir, 'package.json');
 
@@ -89,7 +89,7 @@ module.exports = function (context) {
       }
 
       var fileDir = path.dirname(path.join(process.cwd(), context.getFilename()));
-      var modulesDir = getModulesDir(fileDir);
+      var modulesDir = getModulesDir(fileDir) || '';
       var paths = node.arguments[0].value.split('!').map(resolveModule(fileDir, modulesDir));
 
       paths = paths.filter(checkPath);
