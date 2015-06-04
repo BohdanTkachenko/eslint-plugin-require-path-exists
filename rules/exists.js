@@ -4,20 +4,17 @@ var url = require('url');
 var EXTENSIONS = [ 'js', 'jsx', 'es6' ];
 
 function getModulesDir(fromDir) {
+  if (!fs.existsSync(fromDir)) {
+    return null;
+  }
+
   var current = fromDir.split(path.sep).filter(Boolean);
-  var pathname, list;
+  var pathname;
 
   while (current.length) {
-    pathname = current.join(path.sep);
-
-    if (!fs.existsSync(pathname)) {
-      return null;
-    }
-
-    list = fs.readdirSync(pathname);
-
-    if (list.indexOf('package.json') >= 0) {
-      return path.join(current.join(path.sep), 'node_modules');
+    pathname = path.sep + current.join(path.sep);
+    if (fs.readdirSync(pathname).indexOf('package.json') >= 0) {
+      return path.join(pathname, 'node_modules');
     }
 
     current.pop();
