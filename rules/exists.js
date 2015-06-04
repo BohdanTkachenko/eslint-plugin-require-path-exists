@@ -54,6 +54,8 @@ function resolveModule(fromDir, modulesDir) {
 
       return moduleDir;
     }
+
+    return value;
   };
 }
 
@@ -90,15 +92,16 @@ module.exports = function (context) {
 
       var fileDir = path.dirname(path.join(process.cwd(), context.getFilename()));
       var modulesDir = getModulesDir(fileDir) || '';
-      var paths = node.arguments[0].value.split('!').map(resolveModule(fileDir, modulesDir));
 
-      paths = paths.filter(checkPath);
-      paths.forEach(function (pathname) {
-        pathname = pathname.replace(fileDir + (/\/$/.test(fileDir) ? '' : path.sep), './');
-        pathname = pathname.replace(modulesDir + (/\/$/.test(modulesDir) ? '' : path.sep), '');
+      node.arguments[0].value.split('!')
+        .map(resolveModule(fileDir, modulesDir))
+        .filter(checkPath)
+        .forEach(function (pathname) {
+          pathname = pathname.replace(fileDir + (/\/$/.test(fileDir) ? '' : path.sep), './');
+          pathname = pathname.replace(modulesDir + (/\/$/.test(modulesDir) ? '' : path.sep), '');
 
-        context.report(node, "Cannot find module '" + pathname + "'", {});
-      });
+          context.report(node, "Cannot find module '" + pathname + "'", {});
+        });
     }
   };
 };
