@@ -2,6 +2,11 @@ var fs = require('fs');
 var path = require('path');
 var url = require('url');
 var EXTENSIONS = [ 'js', 'jsx', 'es6' ];
+var BUNDLED_MODULES = [
+  'assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 'crypto', 'dgram', 'dns', 'domain', 'events',
+  'freelist', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring', 'readline', 'repl',
+  'smalloc', 'stream', 'string_decoder', 'sys', 'timers', 'tls', 'tty', 'url', 'util', 'vm', 'zlib'
+];
 
 function getModulesDir(fromDir) {
   if (!fs.existsSync(fromDir)) {
@@ -44,7 +49,7 @@ function resolveModule(fromDir, modulesDir) {
           pkg = false;
         }
 
-        if (pkg && pkg.main !== 'index.js') {
+        if (pkg && pkg.main && !Array.isArray(pkg.main) && pkg.main !== 'index.js') {
           return path.join(moduleDir, pkg.main);
         }
       }
@@ -91,6 +96,9 @@ module.exports = function (context) {
       var modulesDir = getModulesDir(fileDir) || '';
 
       node.arguments[0].value.split('!')
+        .filter(function (value) {
+          return BUNDLED_MODULES.indexOf(value) === -1;
+        })
         .map(resolveModule(fileDir, modulesDir))
         .filter(checkPath)
         .forEach(function (pathname) {
