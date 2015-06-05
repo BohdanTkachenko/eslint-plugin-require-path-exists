@@ -1,9 +1,8 @@
 /* global window */
 
-var fs = require('fs');
+var fs = require('fs-plus');
 var path = require('path');
 var url = require('url');
-var EXTENSIONS = [ 'js', 'jsx', 'es6' ];
 var BUNDLED_MODULES = [
   'assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 'crypto', 'dgram', 'dns', 'domain', 'events',
   'freelist', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring', 'readline', 'repl',
@@ -63,28 +62,23 @@ function resolveModule(fromDir, modulesDir) {
   };
 }
 
-function checkPath(pathname, checkingPath) {
-  if (fs.existsSync(pathname)) {
-    if (fs.statSync(pathname).isDirectory()) {
-      pathname = path.join(pathname, 'index.js');
+function checkPath(extensions) {
+  return function (pathname) {
+    pathname = fs.resolveExtension(pathname, extensions);
 
-      if (fs.existsSync(pathname)) {
-        return false;
-      }
-    } else {
-      return false;
+    if (!pathname) {
+      return true;
     }
-  }
 
-  if (!checkingPath) {
-    for (var i = 0; i < EXTENSIONS.length; i++) {
-      if (!checkPath(pathname + '.' + EXTENSIONS[i], true)) {
-        return false;
+    if (fs.isDirectorySync(pathname)) {
+      pathname = fs.resolveExtension(path.join(pathname, 'index'), extensions);
+      if (!pathname) {
+        return true;
       }
     }
-  }
 
-  return true;
+    return false;
+  };
 }
 
 function isAtom() {
@@ -132,8 +126,6 @@ function getWebpackConfig(fromDir) {
   while (current.length) {
     pathname = path.sep + current.join(path.sep);
 
-    //console.log(fs.readdirSync(pathname));
-
     if (fs.readdirSync(pathname).indexOf('webpack.config.js') >= 0) {
       return require(path.join(pathname, 'webpack.config.js'));
     }
@@ -155,24 +147,33 @@ module.exports = function (context) {
       var modulesDir = getModulesDir(fileDir) || '';
       var webpackConfig = getWebpackConfig(fileDir);
       var alias = {};
+      var extensions = Object.keys(require.extensions);
 
-      if (webpackConfig.resolve && webpackConfig.resolve.alias) {
-        alias = webpackConfig.resolve.alias;
+      if (extensions.indexOf('') === -1) {
+        extensions.push('');
+      }
+
+      if (typeof webpackConfig.resolve === 'object') {
+        if (typeof webpackConfig.resolve.alias === 'object') {
+          alias = webpackConfig.resolve.alias;
+        }
+
+        if (Array.isArray(webpackConfig.resolve.extensions)) {
+          webpackConfig.resolve.extensions.forEach(function (ext) {
+            if (extensions.indexOf(ext) === -1) {
+              extensions.push(ext);
+            }
+          });
+        }
       }
 
       node.arguments[0].value.split('!')
         .filter(function (value) {
           return BUNDLED_MODULES.indexOf(value) === -1;
         })
-        .map(function (item) {
-          if (alias[item]) {
-            item = alias[item];
-          }
-
-          return item;
-        })
+        .map(function (item) { return alias[item] ? alias[item] : item; })
         .map(resolveModule(fileDir, modulesDir))
-        .filter(checkPath)
+        .filter(checkPath(extensions))
         .forEach(function (pathname) {
           pathname = pathname.replace(fileDir + (/\/$/.test(fileDir) ? '' : path.sep), './');
           pathname = pathname.replace(modulesDir + (/\/$/.test(modulesDir) ? '' : path.sep), '');
