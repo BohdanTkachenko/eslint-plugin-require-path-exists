@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-require-path-exists",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Checks all require path's to exist as files",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,9 @@
     "webpack",
     "browserify",
     "require",
-    "path"
+    "path",
+    "eslint-plugin",
+    "eslintplugin"
   ],
   "author": "Bohdan Tkachenko <bohdan@tkachenko.io>",
   "license": "MIT",
