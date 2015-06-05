@@ -1,4 +1,4 @@
-/* global atom */
+/* global window */
 
 var fs = require('fs');
 var path = require('path');
@@ -87,6 +87,63 @@ function checkPath(pathname, checkingPath) {
   return true;
 }
 
+function isAtom() {
+  try {
+    if (typeof window !== undefined && typeof window.atom !== undefined) {
+      return true;
+    }
+  } catch (e) {
+    return false;
+  }
+
+  return false;
+}
+
+function getCurrentFilePath(context) {
+  if (!isAtom()) {
+    return path.dirname(path.join(process.cwd(), context.getFilename()));
+  }
+
+  var editor = window.atom.workspace.getActivePaneItem();
+  if (!editor) {
+    return null;
+  }
+
+  var file = editor.buffer.file;
+  if (!file) {
+    return null;
+  }
+
+  if (file.cachedContents !== context.getSource()) {
+    return null;
+  }
+
+  return path.dirname(file.path);
+}
+
+function getWebpackConfig(fromDir) {
+  if (!fs.existsSync(fromDir)) {
+    return {};
+  }
+
+  var current = fromDir.split(path.sep).filter(Boolean);
+  var pathname;
+
+  while (current.length) {
+    pathname = path.sep + current.join(path.sep);
+
+    //console.log(fs.readdirSync(pathname));
+
+    if (fs.readdirSync(pathname).indexOf('webpack.config.js') >= 0) {
+      return require(path.join(pathname, 'webpack.config.js'));
+    }
+
+    current.pop();
+  }
+
+  return {};
+}
+
 module.exports = function (context) {
   return {
     CallExpression: function (node) {
@@ -94,34 +151,25 @@ module.exports = function (context) {
         return;
       }
 
-      var fileDir;
-      if (atom !== undefined) {
-        var editor = atom.workspace.getActivePaneItem();
-
-        if (!editor) {
-          return;
-        }
-
-        var file = editor.buffer.file;
-
-        if (!file) {
-          return;
-        }
-
-        if (file.cachedContents !== context.getSource()) {
-          return;
-        }
-
-        fileDir = path.dirname(file.path);
-      } else {
-        fileDir = path.dirname(path.join(process.cwd(), context.getFilename()));
-      }
-
+      var fileDir = getCurrentFilePath(context);
       var modulesDir = getModulesDir(fileDir) || '';
+      var webpackConfig = getWebpackConfig(fileDir);
+      var alias = {};
+
+      if (webpackConfig.resolve && webpackConfig.resolve.alias) {
+        alias = webpackConfig.resolve.alias;
+      }
 
       node.arguments[0].value.split('!')
         .filter(function (value) {
           return BUNDLED_MODULES.indexOf(value) === -1;
+        })
+        .map(function (item) {
+          if (alias[item]) {
+            item = alias[item];
+          }
+
+          return item;
         })
         .map(resolveModule(fileDir, modulesDir))
         .filter(checkPath)
