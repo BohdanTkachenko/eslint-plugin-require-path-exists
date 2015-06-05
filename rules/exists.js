@@ -34,6 +34,8 @@ function resolveModule(fromDir, modulesDir) {
     var pathname = url.parse(value).pathname;
 
     if (pathname[0] === '.') { // relative
+      console.log(fromDir, pathname);
+
       return path.join(fromDir, pathname);
     } else if (pathname[0] === '/') { // absolute
       return value;
@@ -103,16 +105,7 @@ function getCurrentFilePath(context) {
     return null;
   }
 
-  var file = editor.buffer.file;
-  if (!file) {
-    return null;
-  }
-
-  if (file.cachedContents !== context.getSource()) {
-    return null;
-  }
-
-  return path.dirname(file.path);
+  return path.dirname(editor.getPath());
 }
 
 function getWebpackConfig(fromDir) {
