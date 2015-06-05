@@ -173,8 +173,6 @@ function testModulePath(value, context, node) {
 module.exports = function (context) {
   return {
     ImportDeclaration: function (node) {
-      console.log(node.source.value);
-
       testModulePath(node.source.value, context, node);
     },
     CallExpression: function (node) {
