@@ -136,6 +136,10 @@ module.exports = function (context) {
       }
 
       var fileDir = getCurrentFilePath(context);
+      if (!fileDir) {
+        return;
+      }
+
       var modulesDir = getModulesDir(fileDir) || '';
       var webpackConfig = getWebpackConfig(fileDir);
       var alias = {};
