@@ -17,6 +17,7 @@ function getModulesDir(fromDir) {
   var current = fromDir.split(path.sep).filter(Boolean);
   var pathname;
 
+
   while (current.length) {
     pathname = path.sep + current.join(path.sep);
     if (fs.readdirSync(pathname).indexOf('package.json') >= 0) {
@@ -34,8 +35,6 @@ function resolveModule(fromDir, modulesDir) {
     var pathname = url.parse(value).pathname;
 
     if (pathname[0] === '.') { // relative
-      console.log(fromDir, pathname);
-
       return path.join(fromDir, pathname);
     } else if (pathname[0] === '/') { // absolute
       return value;
