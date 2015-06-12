@@ -12,7 +12,7 @@ var BUNDLED_MODULES = [
 ];
 
 function findInParents(absolutePath, targetFile) {
-  var addSeparator = absolutePath[0] == path.sep;
+  var addSeparator = absolutePath.charAt(0) == path.sep;
   var current = absolutePath.split(path.sep).filter(Boolean);
   var pathname;
   while (current.length) {
