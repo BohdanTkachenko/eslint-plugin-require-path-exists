@@ -11,19 +11,18 @@ var BUNDLED_MODULES = [
   'smalloc', 'stream', 'string_decoder', 'sys', 'timers', 'tls', 'tty', 'url', 'util', 'vm', 'zlib'
 ];
 
-function getModulesDir(fromDir) {
-  if (!fs.existsSync(fromDir)) {
-    return null;
-  }
-
-  var current = fromDir.split(path.sep).filter(Boolean);
+function findInParents(absolutePath, targetFile) {
+  var addSeparator = absolutePath.charAt(0) === path.sep;
+  var current = absolutePath.split(path.sep).filter(Boolean);
   var pathname;
-
-
   while (current.length) {
-    pathname = path.sep + current.join(path.sep);
-    if (fs.readdirSync(pathname).indexOf('package.json') >= 0) {
-      return path.join(pathname, 'node_modules');
+    pathname = current.join(path.sep);
+    if (addSeparator) {
+      pathname = path.sep + pathname;
+    }
+
+    if (fs.readdirSync(pathname).indexOf(targetFile) >= 0) {
+      return pathname;
     }
 
     current.pop();
@@ -31,6 +30,20 @@ function getModulesDir(fromDir) {
 
   return null;
 }
+
+function getModulesDir(fromDir) {
+  if (!fs.existsSync(fromDir)) {
+    return null;
+  }
+  var pathname = findInParents(fromDir, 'package.json');
+
+  if (pathname !== null) {
+    return path.join(pathname, 'node_modules');
+  }
+
+  return null;
+}
+
 
 function resolveModule(value, fromDir, modulesDir) {
   var pathname = url.parse(value).pathname;
@@ -95,6 +108,7 @@ function getCurrentFilePath(context) {
     return path.dirname(path.join(process.cwd(), context.getFilename()));
   }
 
+  // TODO: we need this hack until https://github.com/AtomLinter/linter-eslint/pull/89 will be merged
   var editor = window.atom.workspace.getActivePaneItem();
   if (!editor) {
     return null;
@@ -108,17 +122,10 @@ function getWebpackConfig(fromDir) {
     return {};
   }
 
-  var current = fromDir.split(path.sep).filter(Boolean);
-  var pathname;
+  var pathname = findInParents(fromDir, 'webpack.config.js');
 
-  while (current.length) {
-    pathname = path.sep + current.join(path.sep);
-
-    if (fs.readdirSync(pathname).indexOf('webpack.config.js') >= 0) {
-      return require(path.join(pathname, 'webpack.config.js'));
-    }
-
-    current.pop();
+  if (pathname !== null) {
+    return require(path.join(pathname, 'webpack.config.js'));
   }
 
   return {};
