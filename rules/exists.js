@@ -12,7 +12,7 @@ var BUNDLED_MODULES = [
 ];
 
 function findInParents(absolutePath, targetFile) {
-  var addSeparator = absolutePath.charAt(0) == path.sep;
+  var addSeparator = absolutePath.charAt(0) === path.sep;
   var current = absolutePath.split(path.sep).filter(Boolean);
   var pathname;
   while (current.length) {
@@ -20,7 +20,7 @@ function findInParents(absolutePath, targetFile) {
     if (addSeparator) {
       pathname = path.sep + pathname;
     }
-    console.log(path.sep, pathname);
+
     if (fs.readdirSync(pathname).indexOf(targetFile) >= 0) {
       return pathname;
     }
@@ -35,7 +35,7 @@ function getModulesDir(fromDir) {
   if (!fs.existsSync(fromDir)) {
     return null;
   }
-  var pathname = findInParents(fromDir, "package.json");
+  var pathname = findInParents(fromDir, 'package.json');
 
   if (pathname !== null) {
     return path.join(pathname, 'node_modules');
@@ -108,6 +108,7 @@ function getCurrentFilePath(context) {
     return path.dirname(path.join(process.cwd(), context.getFilename()));
   }
 
+  // TODO: we need this hack until https://github.com/AtomLinter/linter-eslint/pull/89 will be merged
   var editor = window.atom.workspace.getActivePaneItem();
   if (!editor) {
     return null;
@@ -121,7 +122,7 @@ function getWebpackConfig(fromDir) {
     return {};
   }
 
-  var pathname = findInParents(fromDir, "webpack.config.js");
+  var pathname = findInParents(fromDir, 'webpack.config.js');
 
   if (pathname !== null) {
     return require(path.join(pathname, 'webpack.config.js'));
