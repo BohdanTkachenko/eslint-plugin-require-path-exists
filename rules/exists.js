@@ -105,7 +105,12 @@ function isAtom() {
 
 function getCurrentFilePath(context) {
   if (!isAtom()) {
-    return path.dirname(path.join(process.cwd(), context.getFilename()));
+    var filename = context.getFilename();
+    if (path.isAbsolute(filename)) {
+      return path.dirname(filename);
+    } else {
+      return path.dirname(path.join(process.cwd(), context.getFilename()));
+    }
   }
 
   // TODO: we need this hack until https://github.com/AtomLinter/linter-eslint/pull/89 will be merged
