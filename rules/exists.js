@@ -106,7 +106,7 @@ function isAtom() {
 function getCurrentFilePath(context) {
   if (!isAtom()) {
     var filename = context.getFilename();
-    if (path.isAbsolute(filename)) {
+    if (fs.isAbsolute(filename)) {
       return path.dirname(filename);
     } else {
       return path.dirname(path.join(process.cwd(), context.getFilename()));
