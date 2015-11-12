@@ -1,23 +1,31 @@
-/* global window */
-
-var fs = require('fs-plus');
-var path = require('path');
-var url = require('url');
+import fs from 'fs-plus';
+import path from 'path';
+import url from 'url';
+import { execSync } from 'child_process';
 
 // TODO: any more correct way to do this?
-var BUNDLED_MODULES = [
+const BUNDLED_MODULES = [
   'assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 'crypto', 'dgram', 'dns', 'domain', 'events',
   'freelist', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring', 'readline', 'repl',
   'smalloc', 'stream', 'string_decoder', 'sys', 'timers', 'tls', 'tty', 'url', 'util', 'vm', 'zlib'
 ];
 
+const WEBPACK_CONFIG_NAMES = [
+  'webpack.config.js',
+  'webpack.config.babel.js'
+];
+
+const PACKAGE_JSON_NAME = 'package.json';
+const NODE_MODULES_DIR_NAME = 'node_modules';
+const MAIN_FILE_NAME = 'index';
+const MAIN_FILE_NAME_JS = 'index.js';
+
 function findInParents(absolutePath, targetFile) {
-  var addSeparator = absolutePath.charAt(0) === path.sep;
-  var current = absolutePath.split(path.sep).filter(Boolean);
-  var pathname;
+  let current = absolutePath.split(path.sep).filter(Boolean);
   while (current.length) {
-    pathname = current.join(path.sep);
-    if (addSeparator) {
+    let pathname = current.join(path.sep);
+
+    if (absolutePath.charAt(0) === path.sep) {
       pathname = path.sep + pathname;
     }
 
@@ -35,10 +43,10 @@ function getModulesDir(fromDir) {
   if (!fs.existsSync(fromDir)) {
     return null;
   }
-  var pathname = findInParents(fromDir, 'package.json');
 
+  let pathname = findInParents(fromDir, PACKAGE_JSON_NAME);
   if (pathname !== null) {
-    return path.join(pathname, 'node_modules');
+    return path.join(pathname, NODE_MODULES_DIR_NAME);
   }
 
   return null;
@@ -46,26 +54,25 @@ function getModulesDir(fromDir) {
 
 
 function resolveModule(value, fromDir, modulesDir) {
-  var pathname = url.parse(value).pathname;
+  let pathname = url.parse(value).pathname;
 
   if (pathname[0] === '.') { // relative
     return path.join(fromDir, pathname);
   } else if (pathname[0] === '/') { // absolute
     return value;
   } else if (modulesDir) { // node_modules
-    var moduleDir = path.join(modulesDir, value);
-    var packageFilename = path.join(moduleDir, 'package.json');
+    let moduleDir = path.join(modulesDir, value);
+    let packageFilename = path.join(moduleDir, PACKAGE_JSON_NAME);
 
     if (fs.existsSync(packageFilename)) {
-      var pkg;
-
+      let pkg;
       try {
         pkg = JSON.parse(fs.readFileSync(packageFilename));
       } catch (e) {
         pkg = false;
       }
 
-      if (pkg && pkg.main && !Array.isArray(pkg.main) && pkg.main !== 'index.js') {
+      if (pkg && pkg.main && !Array.isArray(pkg.main) && pkg.main !== MAIN_FILE_NAME_JS) {
         return path.join(moduleDir, pkg.main);
       }
     }
@@ -82,7 +89,7 @@ function checkPath(pathname, extensions) {
   }
 
   if (fs.isDirectorySync(pathname)) {
-    pathname = fs.resolveExtension(path.join(pathname, 'index'), extensions);
+    pathname = fs.resolveExtension(path.join(pathname, MAIN_FILE_NAME), extensions);
     if (!pathname) {
       return false;
     }
@@ -91,46 +98,32 @@ function checkPath(pathname, extensions) {
   return true;
 }
 
-function isAtom() {
-  try {
-    if (typeof window !== undefined && typeof window.atom !== undefined) {
-      return true;
-    }
-  } catch (e) {
-    return false;
-  }
+function getCurrentFilePath(context) {
+  const filename = context.getFilename();
 
-  return false;
+  if (fs.isAbsolute(filename)) {
+    return path.dirname(filename);
+  } else {
+    return path.dirname(path.join(process.cwd(), context.getFilename()));
+  }
 }
 
-function getCurrentFilePath(context) {
-  if (!isAtom()) {
-    var filename = context.getFilename();
-    if (fs.isAbsolute(filename)) {
-      return path.dirname(filename);
-    } else {
-      return path.dirname(path.join(process.cwd(), context.getFilename()));
+function findWebpackConfig(fromDir) {
+  for (let fileName of WEBPACK_CONFIG_NAMES) {
+    const pathname = findInParents(fromDir, fileName);
+
+    if (pathname) {
+      return path.join(pathname, fileName);
     }
   }
 
-  // TODO: we need this hack until https://github.com/AtomLinter/linter-eslint/pull/89 will be merged
-  var editor = window.atom.workspace.getActivePaneItem();
-  if (!editor) {
-    return null;
-  }
-
-  return path.dirname(editor.getPath());
+  return null;
 }
 
 function getWebpackConfig(fromDir) {
-  if (!fs.existsSync(fromDir)) {
-    return {};
-  }
-
-  var pathname = findInParents(fromDir, 'webpack.config.js');
-
+  const pathname = findWebpackConfig(fromDir);
   if (pathname !== null) {
-    return require(path.join(pathname, 'webpack.config.js'));
+    return require(pathname);
   }
 
   return {};
@@ -141,27 +134,27 @@ function testModulePath(value, context, node) {
     return;
   }
 
-  var fileDir = getCurrentFilePath(context);
+  const fileDir = getCurrentFilePath(context);
   if (!fileDir) {
     return;
   }
 
-  var modulesDir = getModulesDir(fileDir) || '';
-  var webpackConfig = getWebpackConfig(fileDir);
-  var alias = {};
-  var extensions = Object.keys(require.extensions);
+  const modulesDir = getModulesDir(fileDir) || '';
+  const webpackConfig = getWebpackConfig(fileDir);
 
+  let extensions = Object.keys(require.extensions);
   if (extensions.indexOf('') === -1) {
     extensions.push('');
   }
 
+  let alias = {};
   if (typeof webpackConfig.resolve === 'object') {
     if (typeof webpackConfig.resolve.alias === 'object') {
       alias = webpackConfig.resolve.alias;
     }
 
     if (Array.isArray(webpackConfig.resolve.extensions)) {
-      webpackConfig.resolve.extensions.forEach(function (ext) {
+      webpackConfig.resolve.extensions.forEach(ext => {
         if (extensions.indexOf(ext) === -1) {
           extensions.unshift(ext);
         }
@@ -182,19 +175,16 @@ function testModulePath(value, context, node) {
   context.report(node, "Cannot find module '" + value + "'", {});
 }
 
-module.exports = function (context) {
-  return {
-    ImportDeclaration: function (node) {
-      testModulePath(node.source.value, context, node);
-    },
-    CallExpression: function (node) {
-      if (node.callee.name !== 'require' || !node.arguments.length || typeof node.arguments[0].value !== 'string' || !node.arguments[0].value) {
-        return;
-      }
+export const exists = context => ({
+  ImportDeclaration(node) {
+    testModulePath(node.source.value, context, node);
+  },
 
-      node.arguments[0].value.split('!').forEach(function (value) {
-        testModulePath(value, context, node);
-      });
+  CallExpression(node) {
+    if (node.callee.name !== 'require' || !node.arguments.length || typeof node.arguments[0].value !== 'string' || !node.arguments[0].value) {
+      return;
     }
-  };
-};
+
+    node.arguments[0].value.split('!').forEach(value => testModulePath(value, context, node));
+  }
+});

@@ -43,7 +43,6 @@ This repository will give access to new rules for the ESLint tool. You should us
 
 - Tests coverage.
 - Check in different CommonJS environments (currently only tested in NodeJS and webpack).
-- Remove dirty hack for Atom after [pull request](https://github.com/AtomLinter/linter-eslint/pull/89) in `linter-eslint` is merged.
 - Think about more correct way to detect bundled NodeJS (and webpack) modules. Currently it is a constant array.
 
 # License
