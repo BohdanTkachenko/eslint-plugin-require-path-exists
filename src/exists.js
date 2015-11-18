@@ -1,7 +1,7 @@
 import fs from 'fs-plus';
 import path from 'path';
 import url from 'url';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 // TODO: any more correct way to do this?
 const BUNDLED_MODULES = [
@@ -120,15 +120,43 @@ function findWebpackConfig(fromDir) {
   return null;
 }
 
+let webpackConfigCache = {};
 function getWebpackConfig(fromDir) {
   const pathname = findWebpackConfig(fromDir);
+  if (webpackConfigCache[pathname]) {
+    return webpackConfigCache[pathname];
+  }
+
   if (pathname !== null) {
-    try {
-      return require(pathname);
-    } catch (e) {
-      console.warn('Failed to require webpack config', e);
+    const webpackConfigLoadCode = `
+      var config = '';
+      try {
+        config = JSON.stringify(require('${pathname}'));
+      } catch (e) {}
+      console.log(config);
+    `;
+
+    let nodePath = process.argv[0];
+
+    if (/\.babel\.js/.test(pathname)) {
+      nodePath = require.resolve('babel-cli/bin/babel-node');
+    }
+
+    let result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
+    result = result.toString().trim();
+
+    if (!result) {
       return {};
     }
+
+    try {
+      result = JSON.parse(result);
+      webpackConfigCache[pathname] = result;
+    } catch (e) {
+      return {};
+    }
+
+    return result;
   }
 
   return {};
