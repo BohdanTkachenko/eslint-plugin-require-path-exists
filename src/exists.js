@@ -1,7 +1,6 @@
 import fs from 'fs-plus';
 import path from 'path';
 import url from 'url';
-import { execSync } from 'child_process';
 
 // TODO: any more correct way to do this?
 const BUNDLED_MODULES = [
@@ -162,7 +161,17 @@ function testModulePath(value, context, node) {
     }
   }
 
-  value = alias[value] ? alias[value] : value;
+  if (alias[value] !== undefined) {
+    value = alias[value];
+  } else {
+    for (const key of Object.keys(alias)) {
+      if (value.startsWith(`${key}/`)) {
+        value = value.replace(`${key}/`, `${alias[key]}/`);
+        break;
+      }
+    }
+  }
+
   value = resolveModule(value, fileDir, modulesDir);
 
   if (checkPath(value, extensions)) {
