@@ -137,9 +137,10 @@ function getWebpackConfig(fromDir) {
     `;
 
     let nodePath = process.argv[0];
-
-    if (/\.babel\.js/.test(pathname)) {
+    if (/\.babel\.js$/.test(pathname)) {
       nodePath = require.resolve('babel-cli/bin/babel-node');
+    } else if (!/\/node$/.test(nodePath)) {
+      nodePath = 'node';
     }
 
     let result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
