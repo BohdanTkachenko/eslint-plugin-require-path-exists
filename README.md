@@ -36,8 +36,8 @@ This repository will give access to new rules for the ESLint tool. You should us
 | Name  | Description | Default Configuration |
 | ------------- | ------------- | ------------- |
 | exists  | You should only pass existent paths to require() | 'exists': 2 |
-| not_empty | You should not call require() without arguments or with empty argument | 'not_empty': 2 |
-| too_many_arguments | You should pass only one argument to require() function | 'too_many_arguments': 2 |
+| notEmpty | You should not call require() without arguments or with empty argument | 'not_empty': 2 |
+| tooManyArguments | You should pass only one argument to require() function | 'too_many_arguments': 2 |
 
 # ToDo
 
