@@ -1,6 +1,7 @@
 import fs from 'fs-plus';
 import path from 'path';
 import url from 'url';
+import { execSync } from 'child_process';
 
 // TODO: any more correct way to do this?
 const BUNDLED_MODULES = [
@@ -122,7 +123,12 @@ function findWebpackConfig(fromDir) {
 function getWebpackConfig(fromDir) {
   const pathname = findWebpackConfig(fromDir);
   if (pathname !== null) {
-    return require(pathname);
+    try {
+      return require(pathname);
+    } catch (e) {
+      console.warn('Failed to require webpack config', e);
+      return {};
+    }
   }
 
   return {};
