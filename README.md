@@ -27,8 +27,8 @@ This repository will give access to new rules for the ESLint tool. You should us
       - require-path-exists
     rules:
       - require-path-exists/exists: 2
-      - require-path-exists/not_empty: 2
-      - require-path-exists/too_many_arguments: 2
+      - require-path-exists/notEmpty: 2
+      - require-path-exists/tooManyArguments: 2
     ```
 
 # Rules
