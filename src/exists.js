@@ -52,13 +52,12 @@ function getModulesDir(fromDir) {
   return null;
 }
 
-
 function resolveModule(value, fromDir, modulesDir) {
-  let pathname = url.parse(value).pathname;
+  let pathname = url.parse(value).pathname || '';
 
-  if (pathname[0] === '.') { // relative
+  if (pathname.startsWith('.')) { // relative
     return path.join(fromDir, pathname);
-  } else if (pathname[0] === '/') { // absolute
+  } else if (pathname.startsWith('/')) { // absolute
     return value;
   } else if (modulesDir) { // node_modules
     let moduleDir = path.join(modulesDir, value);
@@ -99,13 +98,17 @@ function checkPath(pathname, extensions) {
 }
 
 function getCurrentFilePath(context) {
-  const filename = context.getFilename();
+  let filename = context.getFilename();
 
-  if (fs.isAbsolute(filename)) {
-    return path.dirname(filename);
-  } else {
-    return path.dirname(path.join(process.cwd(), context.getFilename()));
+  if (!fs.isAbsolute(filename)) {
+    if (process.release.sourceUrl.indexOf('atom-shell') > 0) {
+      filename = path.basename(filename);
+    }
+
+    filename = path.join(process.cwd(), filename);
   }
+
+  return path.dirname(filename);
 }
 
 function findWebpackConfig(fromDir) {
@@ -143,8 +146,13 @@ function getWebpackConfig(fromDir) {
       nodePath = 'node';
     }
 
-    let result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
-    result = result.toString().trim();
+    let result;
+    try {
+      result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
+      result = result.toString().trim();
+    } catch (e) {
+      return {};
+    }
 
     if (!result) {
       return {};
@@ -163,13 +171,8 @@ function getWebpackConfig(fromDir) {
   return {};
 }
 
-function testModulePath(value, context, node) {
+function testModulePath(value, fileDir) {
   if (BUNDLED_MODULES.indexOf(value) >= 0) {
-    return;
-  }
-
-  const fileDir = getCurrentFilePath(context);
-  if (!fileDir) {
     return;
   }
 
@@ -216,12 +219,30 @@ function testModulePath(value, context, node) {
   value = value.replace(fileDir + (/\/$/.test(fileDir) ? '' : path.sep), './');
   value = value.replace(modulesDir + (/\/$/.test(modulesDir) ? '' : path.sep), '');
 
-  context.report(node, "Cannot find module '" + value + "'", {});
+  return `Cannot find module '${value}'`;
+}
+
+function testRequirePath(fileName, node, context) {
+  for (let value of fileName.split('!')) {
+    const fileDir = getCurrentFilePath(context);
+    if (!fileDir) {
+      continue;
+    }
+
+    try {
+      let result = testModulePath(value, fileDir);
+      if (result) {
+        context.report(node, result, {});
+      }
+    } catch (e) {
+      context.report(node, `Unexpected error in eslint-plugin-require-path-exists: ${e.message}\n${e.stack}`, {});
+    }
+  }
 }
 
 export const exists = context => ({
   ImportDeclaration(node) {
-    testModulePath(node.source.value, context, node);
+    testRequirePath(node.source.value, node, context);
   },
 
   CallExpression(node) {
@@ -229,6 +250,6 @@ export const exists = context => ({
       return;
     }
 
-    node.arguments[0].value.split('!').forEach(value => testModulePath(value, context, node));
+    testRequirePath(node.arguments[0].value, node, context);
   }
 });
