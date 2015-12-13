@@ -99,12 +99,7 @@ function checkPath(pathname, extensions) {
 
 function getCurrentFilePath(context) {
   let filename = context.getFilename();
-
   if (!fs.isAbsolute(filename)) {
-    if (process.release.sourceUrl.indexOf('atom-shell') > 0) {
-      filename = path.basename(filename);
-    }
-
     filename = path.join(process.cwd(), filename);
   }
 
