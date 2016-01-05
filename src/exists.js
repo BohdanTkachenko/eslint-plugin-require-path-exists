@@ -166,7 +166,7 @@ function getWebpackConfig(fromDir) {
   return {};
 }
 
-function testModulePath(value, fileDir) {
+function testModulePath(value, fileDir, configExtensions = []) {
   if (BUNDLED_MODULES.indexOf(value) >= 0) {
     return;
   }
@@ -174,7 +174,7 @@ function testModulePath(value, fileDir) {
   const modulesDir = getModulesDir(fileDir) || '';
   const webpackConfig = getWebpackConfig(fileDir);
 
-  let extensions = Object.keys(require.extensions);
+  let extensions = Object.keys(require.extensions).concat(configExtensions);
   if (extensions.indexOf('') === -1) {
     extensions.push('');
   }
@@ -217,7 +217,15 @@ function testModulePath(value, fileDir) {
   return `Cannot find module '${value}'`;
 }
 
+// Gets extensions array from rule config options, e.g. "require-path-exists/exists" : [1, { "extensions" : [".jsx"] }]
+// https://github.com/yannickcr/eslint-plugin-react/blob/master/lib/rules/require-extension.js#L42
+function getConfigExtensions(context) {
+  return context.options[0] && context.options[0].extensions || [];
+}
+
 function testRequirePath(fileName, node, context) {
+  let configExtensions = getConfigExtensions(context);
+
   for (let value of fileName.split('!')) {
     const fileDir = getCurrentFilePath(context);
     if (!fileDir) {
@@ -225,7 +233,7 @@ function testRequirePath(fileName, node, context) {
     }
 
     try {
-      let result = testModulePath(value, fileDir);
+      let result = testModulePath(value, fileDir, configExtensions);
       if (result) {
         context.report(node, result, {});
       }
