@@ -166,7 +166,7 @@ function getWebpackConfig(fromDir) {
   return {};
 }
 
-function testModulePath(value, fileDir, configExtensions = []) {
+function testModulePath(value, fileDir, extensions = []) {
   if (BUNDLED_MODULES.indexOf(value) >= 0) {
     return;
   }
@@ -174,23 +174,10 @@ function testModulePath(value, fileDir, configExtensions = []) {
   const modulesDir = getModulesDir(fileDir) || '';
   const webpackConfig = getWebpackConfig(fileDir);
 
-  let extensions = Object.keys(require.extensions).concat(configExtensions);
-  if (extensions.indexOf('') === -1) {
-    extensions.push('');
-  }
-
   let alias = {};
   if (typeof webpackConfig.resolve === 'object') {
     if (typeof webpackConfig.resolve.alias === 'object') {
       alias = webpackConfig.resolve.alias;
-    }
-
-    if (Array.isArray(webpackConfig.resolve.extensions)) {
-      webpackConfig.resolve.extensions.forEach(ext => {
-        if (extensions.indexOf(ext) === -1) {
-          extensions.unshift(ext);
-        }
-      });
     }
   }
 

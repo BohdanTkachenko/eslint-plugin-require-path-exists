@@ -11,6 +11,6 @@ export default {
   rulesConfig: {
     notEmpty: 2,
     tooManyArguments: 2,
-    exists: 2
+    exists: [ 2, { extensions: [ '', '.js', '.json', '.node' ] }]
   }
 };

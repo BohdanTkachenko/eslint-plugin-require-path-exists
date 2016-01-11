@@ -1,4 +1,4 @@
-This repository will give access to new rules for the ESLint tool. You should use it only if you are developing a CommonJS application. It checks for require() function usage.
+This repository will give access to new rules for the ESLint tool. You should use it only if you are developing a CommonJS application. It checks for require() function usage (or for import, if you're using ES6 syntax).
 
 # Features
 - Supports both `require()` and ES6 `import` syntax
@@ -16,30 +16,53 @@ This repository will give access to new rules for the ESLint tool. You should us
 
 2. Enable the plugin by adding it to your `.eslintrc`:
 
-    ```yaml
-    plugins:
-      - require-path-exists
+    ```js
+    {
+      "plugins": [
+        "require-path-exists"
+      ]
+    }
     ```
 3. You can also configure these rules in your `.eslintrc`. All rules defined in this plugin have to be prefixed by 'require-path-exists/'
 
-    ```yaml
-    plugins:
-      - require-path-exists
-    rules:
-      - require-path-exists/exists: 2
-      - require-path-exists/notEmpty: 2
-      - require-path-exists/tooManyArguments: 2
+    ```js
+    {
+      "plugins": [
+        "require-path-exists"
+      ],
+      "rules": {
+        "require-path-exists/notEmpty": 2,
+        "require-path-exists/tooManyArguments": 2,
+        "require-path-exists/exists": [ 2, {
+          "extensions": [
+            "",
+            ".jsx",
+            ".es.js",
+            ".jsx",
+            ".json5",
+            ".es",
+            ".es6",
+            ".coffee"
+          ]
+        }]
+      }
+  ]
+}
     ```
 
 # Rules
 
-| Name  | Description | Default Configuration |
-| ------------- | ------------- | ------------- |
-| exists  | You should only pass existent paths to require() | 'exists': 2 |
-| notEmpty | You should not call require() without arguments or with empty argument | 'notEmpty': 2 |
-| tooManyArguments | You should pass only one argument to require() function | 'tooManyArguments': 2 |
+| Name                                 | Description                                                            | Default Configuration |
+| ------------------------------------ | ---------------------------------------------------------------------- | --------------------- |
+| require-path-exists/notEmpty         | You should not call require() without arguments or with empty argument | ```2```               |
+| require-path-exists/tooManyArguments | You should pass only one argument to require() function                | ```2```               |
+| require-path-exists/exists           | You should only pass existing paths to require()                       | ```[ 2, { "extensions": [ "", ".js", ".json", ".node" ] }]``` |
 
-# ToDo
+# Changelog
+
+- **1.1.0**: Resolving of webpack file extensions is not supported anymore. Please manually provide extensions to plugin config instead.
+
+# TODO
 
 - Tests coverage.
 - Check in different CommonJS environments (currently only tested in NodeJS and webpack).
