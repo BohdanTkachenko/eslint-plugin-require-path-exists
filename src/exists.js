@@ -4,11 +4,6 @@ import url from 'url';
 import { execFileSync } from 'child_process';
 import builtinModules from 'builtin-modules';
 
-const WEBPACK_CONFIG_NAMES = [
-  'webpack.config.js',
-  'webpack.config.babel.js'
-];
-
 const PACKAGE_JSON_NAME = 'package.json';
 const NODE_MODULES_DIR_NAME = 'node_modules';
 const MAIN_FILE_NAME = 'index';
@@ -100,73 +95,47 @@ function getCurrentFilePath(context) {
   return path.dirname(filename);
 }
 
-function findWebpackConfig(fromDir) {
-  for (let fileName of WEBPACK_CONFIG_NAMES) {
-    const pathname = findInParents(fromDir, fileName);
-
-    if (pathname) {
-      return path.join(pathname, fileName);
-    }
-  }
-
-  return null;
-}
-
-let webpackConfigCache = {};
+const webpackConfigCache = {};
 function getWebpackConfig(fromDir) {
-  const pathname = findWebpackConfig(fromDir);
+  const pathname = path.resolve(fromDir);
   if (webpackConfigCache[pathname]) {
     return webpackConfigCache[pathname];
   }
 
-  if (pathname !== null) {
-    const webpackConfigLoadCode = `
-      var config = '';
-      try {
-        config = JSON.stringify(require('${pathname}'));
-      } catch (e) {}
-      console.log(config);
-    `;
-
-    let nodePath = process.argv[0];
-    if (/\.babel\.js$/.test(pathname)) {
-      nodePath = require.resolve('babel-cli/bin/babel-node');
-    } else if (!/\/node$/.test(nodePath)) {
-      nodePath = 'node';
-    }
-
-    let result;
-    try {
-      result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
-      result = result.toString().trim();
-    } catch (e) {
-      return {};
-    }
-
-    if (!result) {
-      return {};
-    }
-
-    try {
-      result = JSON.parse(result);
-      webpackConfigCache[pathname] = result;
-    } catch (e) {
-      return {};
-    }
-
-    return result;
+  if (!fs.existsSync(pathname)) {
+    throw new Error(`Webpack config does not exists at ${pathname}.`);
   }
 
-  return {};
+  const webpackConfigLoadCode = `
+    var config = '';
+    try {
+      config = JSON.stringify(require('${pathname}'));
+    } catch (e) {}
+    console.log(config);
+  `;
+
+  let nodePath = process.argv[0];
+  if (/\.babel\.js$/.test(pathname)) {
+    nodePath = require.resolve('babel-cli/bin/babel-node');
+  } else if (!/\/node$/.test(nodePath)) {
+    nodePath = 'node';
+  }
+
+  let result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
+  result = result.toString().trim();
+
+  if (!result) {
+    throw new Error(`Webpack config is empty at ${pathname}.`);
+  }
+
+  result = JSON.parse(result);
+  webpackConfigCache[pathname] = result;
+
+  return result;
 }
 
-function testModulePath(value, fileDir, extensions = []) {
-  if (builtinModules.indexOf(value) >= 0) {
-    return;
-  }
-
-  const modulesDir = getModulesDir(fileDir) || '';
-  const webpackConfig = getWebpackConfig(fileDir);
+function getWebpackAliases(webpackConfigPath) {
+  const webpackConfig = getWebpackConfig(webpackConfigPath);
 
   let alias = {};
   if (typeof webpackConfig.resolve === 'object') {
@@ -175,12 +144,22 @@ function testModulePath(value, fileDir, extensions = []) {
     }
   }
 
-  if (alias[value] !== undefined) {
-    value = alias[value];
+  return alias;
+}
+
+function testModulePath(value, fileDir, aliases = {}, extensions = []) {
+  if (builtinModules.indexOf(value) >= 0) {
+    return;
+  }
+
+  const modulesDir = getModulesDir(fileDir) || '';
+
+  if (aliases[value] !== undefined) {
+    value = aliases[value];
   } else {
-    for (const key of Object.keys(alias)) {
+    for (const key of Object.keys(aliases)) {
       if (value.startsWith(`${key}/`)) {
-        value = value.replace(`${key}/`, `${alias[key]}/`);
+        value = value.replace(`${key}/`, `${aliases[key]}/`);
         break;
       }
     }
@@ -198,15 +177,7 @@ function testModulePath(value, fileDir, extensions = []) {
   return `Cannot find module '${value}'`;
 }
 
-// Gets extensions array from rule config options, e.g. "require-path-exists/exists" : [1, { "extensions" : [".jsx"] }]
-// https://github.com/yannickcr/eslint-plugin-react/blob/master/lib/rules/require-extension.js#L42
-function getConfigExtensions(context) {
-  return context.options[0] && context.options[0].extensions || [];
-}
-
-function testRequirePath(fileName, node, context) {
-  let configExtensions = getConfigExtensions(context);
-
+function testRequirePath(fileName, node, context, config) {
   for (let value of fileName.split('!')) {
     const fileDir = getCurrentFilePath(context);
     if (!fileDir) {
@@ -214,7 +185,7 @@ function testRequirePath(fileName, node, context) {
     }
 
     try {
-      let result = testModulePath(value, fileDir, configExtensions);
+      let result = testModulePath(value, fileDir, config.aliases, config.extensions);
       if (result) {
         context.report(node, result, {});
       }
@@ -224,16 +195,30 @@ function testRequirePath(fileName, node, context) {
   }
 }
 
-export const exists = context => ({
-  ImportDeclaration(node) {
-    testRequirePath(node.source.value, node, context);
-  },
+export const exists = context => {
+  const pluginSettings = (context && context.options && typeof context.options[0] === 'object') ? context.options[0] : {};
 
-  CallExpression(node) {
-    if (node.callee.name !== 'require' || !node.arguments.length || typeof node.arguments[0].value !== 'string' || !node.arguments[0].value) {
-      return;
-    }
+  const config = {
+    extensions: Array.isArray(pluginSettings.extensions) ? pluginSettings.extensions : [ '', '.js', '.json', '.node' ],
+    webpackConfigPath: pluginSettings.webpackConfigPath === undefined ? null : pluginSettings.webpackConfigPath,
+    aliases: {}
+  };
 
-    testRequirePath(node.arguments[0].value, node, context);
+  if (config.webpackConfigPath !== null) {
+    config.aliases = getWebpackAliases(config.webpackConfigPath);
   }
-});
+
+  return {
+    ImportDeclaration(node) {
+      testRequirePath(node.source.value, node, context, config);
+    },
+
+    CallExpression(node) {
+      if (node.callee.name !== 'require' || !node.arguments.length || typeof node.arguments[0].value !== 'string' || !node.arguments[0].value) {
+        return;
+      }
+
+      testRequirePath(node.arguments[0].value, node, context, config);
+    }
+  };
+};
