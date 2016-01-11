@@ -2,13 +2,7 @@ import fs from 'fs-plus';
 import path from 'path';
 import url from 'url';
 import { execFileSync } from 'child_process';
-
-// TODO: any more correct way to do this?
-const BUNDLED_MODULES = [
-  'assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 'crypto', 'dgram', 'dns', 'domain', 'events',
-  'freelist', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring', 'readline', 'repl',
-  'smalloc', 'stream', 'string_decoder', 'sys', 'timers', 'tls', 'tty', 'url', 'util', 'vm', 'zlib'
-];
+import builtinModules from 'builtin-modules';
 
 const WEBPACK_CONFIG_NAMES = [
   'webpack.config.js',
@@ -167,7 +161,7 @@ function getWebpackConfig(fromDir) {
 }
 
 function testModulePath(value, fileDir, extensions = []) {
-  if (BUNDLED_MODULES.indexOf(value) >= 0) {
+  if (builtinModules.indexOf(value) >= 0) {
     return;
   }
 

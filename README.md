@@ -60,13 +60,13 @@ This repository will give access to new rules for the ESLint tool. You should us
 
 # Changelog
 
-- **1.1.0**: Resolving of webpack file extensions is not supported anymore. Please manually provide extensions to plugin config instead.
+- **1.1.1**: Correctly resolve node built-in modules, using [builtin-modules](https://www.npmjs.com/package/builtin-modules) npm package (thanks to [@antialias](https://github.com/antialias))
+- **1.1.0**: Resolving of webpack file extensions is not supported anymore (thanks to [@lilianammmatos](https://github.com/lilianammmatos)). Please manually provide extensions to plugin config instead.
 
 # TODO
 
 - Tests coverage.
 - Check in different CommonJS environments (currently only tested in NodeJS and webpack).
-- Think about more correct way to detect bundled NodeJS (and webpack) modules. Currently it is a constant array.
 
 # License
 
