@@ -107,11 +107,12 @@ function getWebpackConfig(fromDir) {
   }
 
   const webpackConfigLoadCode = `
-    var config = '';
     try {
-      config = JSON.stringify(require('${pathname}'));
-    } catch (e) {}
-    console.log(config);
+      var config = JSON.stringify(require('${pathname}'));
+      console.log(config);
+    } catch (e) {
+      console.log('{ "parseError": ' + JSON.stringify(e.message) + ' }');
+    }
   `;
 
   let nodePath = process.argv[0];
@@ -129,6 +130,10 @@ function getWebpackConfig(fromDir) {
   }
 
   result = JSON.parse(result);
+  if (result.parseError) {
+    throw new Error(`Cannot load Webpack config: ${result.parseError}`);
+  }
+
   webpackConfigCache[pathname] = result;
 
   return result;

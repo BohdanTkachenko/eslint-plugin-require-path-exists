@@ -60,6 +60,7 @@ This repository will give access to new rules for the ESLint tool. You should us
 | require-path-exists/exists           | You should only pass existing paths to require()                       | ```[ 2, { "extensions": [ "", ".js", ".json", ".node" ], "webpackConfigPath": null }]``` |
 
 # Changelog
+- **1.1.3**: Output errors when trying to load webpack config
 - **1.1.2**: In order to have aliases working you now should provide webpackConfigPath config value.
 - **1.1.1**: Correctly resolve node built-in modules, using [builtin-modules](https://www.npmjs.com/package/builtin-modules) npm package (thanks to [@antialias](https://github.com/antialias))
 - **1.1.0**: Resolving of webpack file extensions is not supported anymore (thanks to [@lilianammmatos](https://github.com/lilianammmatos)). Please manually provide extensions to plugin config instead.
