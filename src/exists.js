@@ -106,23 +106,16 @@ function getWebpackConfig(fromDir) {
     throw new Error(`Webpack config does not exists at ${pathname}.`);
   }
 
-  const webpackConfigLoadCode = `
-    try {
-      var config = JSON.stringify(require('${pathname}'));
-      console.log(config);
-    } catch (e) {
-      console.log('{ "parseError": ' + JSON.stringify(e.message) + ' }');
-    }
-  `;
+  const webpackConfigLoadCode = [
+    'try {',
+    `  var config = JSON.stringify(require('${pathname}'));`,
+    '  console.log(config);',
+    '} catch (e) {',
+    `  console.log('{ "parseError": ' + JSON.stringify(e.message) + ' }');`,
+    '}'
+  ].join('');
 
-  let nodePath = process.argv[0];
-  if (/\.babel\.js$/.test(pathname)) {
-    nodePath = require.resolve('babel-cli/bin/babel-node');
-  } else if (!/\/node$/.test(nodePath)) {
-    nodePath = 'node';
-  }
-
-  let result = execFileSync(nodePath, [ '-e', webpackConfigLoadCode ]);
+  let result = execFileSync(process.argv[0], [ '-e', webpackConfigLoadCode ]);
   result = result.toString().trim();
 
   if (!result) {
