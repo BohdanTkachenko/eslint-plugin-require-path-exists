@@ -1,90 +1,8 @@
 import fs from 'fs-plus';
 import path from 'path';
-import url from 'url';
 import { execFileSync } from 'child_process';
 import builtinModules from 'builtin-modules';
-
-const PACKAGE_JSON_NAME = 'package.json';
-const NODE_MODULES_DIR_NAME = 'node_modules';
-const MAIN_FILE_NAME = 'index';
-const MAIN_FILE_NAME_JS = 'index.js';
-
-function findInParents(absolutePath, targetFile) {
-  let current = absolutePath.split(path.sep).filter(Boolean);
-  while (current.length) {
-    let pathname = current.join(path.sep);
-
-    if (absolutePath.charAt(0) === path.sep) {
-      pathname = path.sep + pathname;
-    }
-
-    if (fs.readdirSync(pathname).indexOf(targetFile) >= 0) {
-      return pathname;
-    }
-
-    current.pop();
-  }
-
-  return null;
-}
-
-function getModulesDir(fromDir) {
-  if (!fs.existsSync(fromDir)) {
-    return null;
-  }
-
-  let pathname = findInParents(fromDir, PACKAGE_JSON_NAME);
-  if (pathname !== null) {
-    return path.join(pathname, NODE_MODULES_DIR_NAME);
-  }
-
-  return null;
-}
-
-function resolveModule(value, fromDir, modulesDir) {
-  let pathname = url.parse(value).pathname || '';
-
-  if (pathname.startsWith('.')) { // relative
-    return path.join(fromDir, pathname);
-  } else if (pathname.startsWith('/')) { // absolute
-    return value;
-  } else if (modulesDir) { // node_modules
-    let moduleDir = path.join(modulesDir, value);
-    let packageFilename = path.join(moduleDir, PACKAGE_JSON_NAME);
-
-    if (fs.existsSync(packageFilename)) {
-      let pkg;
-      try {
-        pkg = JSON.parse(fs.readFileSync(packageFilename));
-      } catch (e) {
-        pkg = false;
-      }
-
-      if (pkg && pkg.main && !Array.isArray(pkg.main) && pkg.main !== MAIN_FILE_NAME_JS) {
-        return path.join(moduleDir, pkg.main);
-      }
-    }
-
-    return moduleDir;
-  }
-}
-
-function checkPath(pathname, extensions) {
-  pathname = fs.resolveExtension(pathname, extensions);
-
-  if (!pathname) {
-    return false;
-  }
-
-  if (fs.isDirectorySync(pathname)) {
-    pathname = fs.resolveExtension(path.join(pathname, MAIN_FILE_NAME), extensions);
-    if (!pathname) {
-      return false;
-    }
-  }
-
-  return true;
-}
+import resolve from 'resolve';
 
 function getCurrentFilePath(context) {
   let filename = context.getFilename();
@@ -150,8 +68,6 @@ function testModulePath(value, fileDir, aliases = {}, extensions = []) {
     return;
   }
 
-  const modulesDir = getModulesDir(fileDir) || '';
-
   if (aliases[value] !== undefined) {
     value = aliases[value];
   } else {
@@ -163,16 +79,14 @@ function testModulePath(value, fileDir, aliases = {}, extensions = []) {
     }
   }
 
-  value = resolveModule(value, fileDir, modulesDir);
-
-  if (checkPath(value, extensions)) {
-    return;
+  try {
+    resolve.sync(value, {
+      basedir: fileDir,
+      extensions
+    });
+  } catch (e) {
+    return e.message;
   }
-
-  value = value.replace(fileDir + (/\/$/.test(fileDir) ? '' : path.sep), './');
-  value = value.replace(modulesDir + (/\/$/.test(modulesDir) ? '' : path.sep), '');
-
-  return `Cannot find module '${value}'`;
 }
 
 function testRequirePath(fileName, node, context, config) {
@@ -194,7 +108,10 @@ function testRequirePath(fileName, node, context, config) {
 }
 
 export const exists = context => {
-  const pluginSettings = (context && context.options && typeof context.options[0] === 'object') ? context.options[0] : {};
+  let pluginSettings = {};
+  if (context && context.options && typeof context.options[0] === 'object') {
+    pluginSettings = context.options[0];
+  }
 
   const config = {
     extensions: Array.isArray(pluginSettings.extensions) ? pluginSettings.extensions : [ '', '.js', '.json', '.node' ],

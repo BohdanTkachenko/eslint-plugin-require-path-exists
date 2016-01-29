@@ -9,5 +9,8 @@
     "strict": [ 1, "never" ],
     "no-unused-vars": [ 1, { "args": "after-used" } ],
     "no-console": 1
+  },
+  ecmaFeatures: {
+    modules: true
   }
 }
