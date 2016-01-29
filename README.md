@@ -1,3 +1,7 @@
+[![NPM](https://nodei.co/npm/eslint-plugin-require-path-exists.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/eslint-plugin-require-path-exists/)
+
+[![Dependency Status](https://david-dm.org/BohdanTkachenko/eslint-plugin-require-path-exists.svg?style=flat-square)](https://david-dm.org/BohdanTkachenko/eslint-plugin-require-path-exists)
+
 This repository will give access to new rules for the ESLint tool. You should use it only if you are developing a CommonJS application. It checks for require() function usage (or for import, if you're using ES6 syntax).
 
 # Features
@@ -60,6 +64,7 @@ This repository will give access to new rules for the ESLint tool. You should us
 | require-path-exists/exists           | You should only pass existing paths to require()                       | ```[ 2, { "extensions": [ "", ".js", ".json", ".node" ], "webpackConfigPath": null }]``` |
 
 # Changelog
+- **1.1.5**: Use [resolve](https://www.npmjs.com/package/resolve) instead of some functions (thanks to [@dominicbarnes](https://github.com/dominicbarnes))
 - **1.1.4**: Correctly exec webpack config in Atom
 - **1.1.3**: Output errors when trying to load webpack config
 - **1.1.2**: In order to have aliases working you now should provide webpackConfigPath config value.
