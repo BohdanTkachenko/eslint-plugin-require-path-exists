@@ -7,6 +7,8 @@
 This repository will give access to new rules for the ESLint tool. You should use it only if you are developing a CommonJS application. It checks for require() function usage (or for import, if you're using ES6 syntax).
 
 # Features
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/BohdanTkachenko/eslint-plugin-require-path-exists.svg)](https://greenkeeper.io/)
 - Supports both `require()` and ES6 `import` syntax
 - Supports aliases in webpack
 - Supports different file extensions
