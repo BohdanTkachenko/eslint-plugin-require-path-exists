@@ -1,5 +1,6 @@
 [![NPM](https://nodei.co/npm/eslint-plugin-require-path-exists.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/eslint-plugin-require-path-exists/)
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/BohdanTkachenko/eslint-plugin-require-path-exists.svg)](https://greenkeeper.io/)
 [![Dependency Status](https://david-dm.org/BohdanTkachenko/eslint-plugin-require-path-exists.svg?style=flat-square)](https://david-dm.org/BohdanTkachenko/eslint-plugin-require-path-exists)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/BohdanTkachenko/eslint-plugin-require-path-exists.svg)](http://isitmaintained.com/project/BohdanTkachenko/eslint-plugin-require-path-exists "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/BohdanTkachenko/eslint-plugin-require-path-exists.svg)](http://isitmaintained.com/project/BohdanTkachenko/eslint-plugin-require-path-exists "Percentage of issues still open")
@@ -8,7 +9,6 @@ This repository will give access to new rules for the ESLint tool. You should us
 
 # Features
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/BohdanTkachenko/eslint-plugin-require-path-exists.svg)](https://greenkeeper.io/)
 - Supports both `require()` and ES6 `import` syntax
 - Supports aliases in webpack
 - Supports different file extensions
