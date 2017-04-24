@@ -11,6 +11,16 @@ export default {
   rulesConfig: {
     notEmpty: 2,
     tooManyArguments: 2,
-    exists: [ 2, { extensions: [ '', '.js', '.json', '.node' ] }]
-  }
+    exists: [ 2, { extensions: [ '', '.js', '.json', '.node' ] }] 
+  },
+  configs: {
+    recommended: {
+      plugins: ['require-path-exists'],
+      rules: {
+        notEmpty: 2,
+        tooManyArguments: 2,
+        exists: [ 2, { extensions: [ '', '.js', '.json', '.node' ] }] 
+      },
+    },
+  },
 };
