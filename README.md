@@ -22,10 +22,13 @@ This repository will give access to new rules for the ESLint tool. You should us
     npm install --save-dev eslint-plugin-require-path-exists
     ```
 
-2. Enable the plugin by adding it to your `.eslintrc`:
+2. Enable the plugin by adding it to the `plugins` and start from default (recommended) configuration in `extends` in `.eslintrc`:
 
     ```js
     {
+      "extends": [
+        "plugin:require-path-exists/recommended"
+      ],
       "plugins": [
         "require-path-exists"
       ]

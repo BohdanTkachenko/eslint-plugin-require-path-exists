@@ -8,9 +8,14 @@ export default {
     tooManyArguments,
     exists
   },
-  rulesConfig: {
-    notEmpty: 2,
-    tooManyArguments: 2,
-    exists: [ 2, { extensions: [ '', '.js', '.json', '.node' ] }]
+  configs: {
+    recommended: {
+      plugins: ['require-path-exists'],
+      rules: {
+        'require-path-exists/notEmpty': 2,
+        'require-path-exists/tooManyArguments': 2,
+        'require-path-exists/exists': [ 2, { extensions: ['', '.js', '.json', '.node'] }] 
+      }
+    }
   }
 };
