@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/BohdanTkachenko/eslint-plugin-require-path-exists",
   "dependencies": {
-    "builtin-modules": "^1.1.1",
+    "builtin-modules": "^2.0.0",
     "fs-plus": "^3.0.0",
     "resolve": "^1.1.7"
   },
