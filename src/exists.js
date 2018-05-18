@@ -82,7 +82,10 @@ function testModulePath(value, fileDir, aliases = {}, extensions = []) {
   try {
     resolve.sync(value, {
       basedir: fileDir,
-      extensions
+      extensions,
+      paths: process.env.NODE_PATH
+        ? [process.env.NODE_PATH]
+        : undefined
     });
   } catch (e) {
     return e.message;
