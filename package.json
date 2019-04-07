@@ -29,7 +29,7 @@
     "dev": "npm run clean && babel -w -e 0 -d lib/ src/"
   },
   "dependencies": {
-    "builtin-modules": "^1.1.1",
+    "builtin-modules": "^3.1.0",
     "fs-plus": "^3.0.0",
     "resolve": "^1.1.7"
   },
