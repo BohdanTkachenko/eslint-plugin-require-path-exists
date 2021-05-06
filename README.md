@@ -36,31 +36,30 @@ This repository will give access to new rules for the ESLint tool. You should us
     ```
 3. You can also configure these rules in your `.eslintrc`. All rules defined in this plugin have to be prefixed by 'require-path-exists/'
 
-    ```js
-    {
-      "plugins": [
-        "require-path-exists"
-      ],
-      "rules": {
-        "require-path-exists/notEmpty": 2,
-        "require-path-exists/tooManyArguments": 2,
-        "require-path-exists/exists": [ 2, {
-          "extensions": [
-            "",
-            ".jsx",
-            ".es.js",
-            ".jsx",
-            ".json5",
-            ".es",
-            ".es6",
-            ".coffee"
-          ],
-          "webpackConfigPath": "webpack.config.js"
-        }]
-      }
-  ]
+```js
+{
+  "plugins": [
+	"require-path-exists"
+  ],
+  "rules": {
+	"require-path-exists/notEmpty": 2,
+	"require-path-exists/tooManyArguments": 2,
+	"require-path-exists/exists": [ 2, {
+	  "extensions": [
+		"",
+		".jsx",
+		".es.js",
+		".jsx",
+		".json5",
+		".es",
+		".es6",
+		".coffee"
+	  ],
+	  "webpackConfigPath": "webpack.config.js"
+	}]
+  }
 }
-    ```
+```
 
 # Rules
 
